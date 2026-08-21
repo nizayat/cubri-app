@@ -1,0 +1,17 @@
+{
+  "name": "Capital AI",
+  "short_name": "Capital AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071321",
+  "theme_color": "#071321",
+  "description": "Centro de decisión y control de cartera.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
