@@ -622,7 +622,7 @@ let tm;function toast(m){let t=document.getElementById('toast');t.textContent=m;
 
 <style>
 #authGate{position:fixed;inset:0;z-index:9999;background:var(--bg,#08161b);display:none;overflow:auto;padding:28px 18px 50px}
-#authGate.show{display:block}.authWrap{max-width:560px;margin:30px auto}.authLogo{font-size:34px;font-weight:900;letter-spacing:-1px;margin-bottom:24px}.authLogo span{color:#c98762}.authCard{background:var(--card,#12232a);border:1px solid rgba(255,255,255,.12);border-radius:26px;padding:22px}.authTabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.authTabs button{border:0;border-radius:15px;padding:13px;font-weight:800}.authTabs .active{background:#eef2ee;color:#102027}.authTabs button:not(.active){background:transparent;color:#9caaae;border:1px solid rgba(255,255,255,.12)}.authField{margin:12px 0}.authField label{display:block;color:#9caaae;font-size:13px;font-weight:700;margin-bottom:6px}.authField input,.authField select{width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:#0d1c22;color:#fff;font-size:16px}.authMsg{min-height:24px;color:#c98762;margin:10px 0;font-size:14px}.authSubmit{width:100%;padding:15px;border:0;border-radius:15px;background:#eef2ee;color:#102027;font-size:16px;font-weight:900}.authHint{color:#9caaae;font-size:13px;line-height:1.45;margin-top:14px}.sessionPill{position:fixed;top:12px;right:12px;z-index:8000;display:none;background:#12232a;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:8px 11px;font-size:12px;color:#dbe4e4}.sessionPill button{margin-left:8px;border:0;background:transparent;color:#c98762;font-weight:800}
+#authGate.show{display:block}.authWrap{max-width:560px;margin:30px auto}.authLogo{font-size:34px;font-weight:900;letter-spacing:-1px;margin-bottom:24px}.authLogo span{color:#c98762}.authCard{background:var(--card,#12232a);border:1px solid rgba(255,255,255,.12);border-radius:26px;padding:22px}.authTabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.authTabs button{border:0;border-radius:15px;padding:13px;font-weight:800}.authTabs .active{background:#eef2ee;color:#102027}.authTabs button:not(.active){background:transparent;color:#9caaae;border:1px solid rgba(255,255,255,.12)}.authField{margin:12px 0}.authField label{display:block;color:#9caaae;font-size:13px;font-weight:700;margin-bottom:6px}.authField input,.authField select{width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:#0d1c22;color:#fff;font-size:16px}.passwordWrap{position:relative}.passwordWrap input{padding-right:76px}.passwordToggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;border-radius:10px;background:rgba(238,242,238,.10);color:#dbe4e4;font-weight:800;font-size:12px;padding:8px 10px;cursor:pointer}.passwordToggle:focus-visible{outline:2px solid #eef2ee;outline-offset:2px}.authMsg{min-height:24px;color:#c98762;margin:10px 0;font-size:14px}.authSubmit{width:100%;padding:15px;border:0;border-radius:15px;background:#eef2ee;color:#102027;font-size:16px;font-weight:900}.authHint{color:#9caaae;font-size:13px;line-height:1.45;margin-top:14px}.sessionPill{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:7900;display:none;align-items:center;gap:8px;max-width:calc(100vw - 32px);background:rgba(18,35,42,.96);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);box-shadow:0 10px 28px rgba(0,0,0,.24);border-radius:999px;padding:7px 9px 7px 13px;font-size:12px;color:#dbe4e4}.sessionPill span{max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sessionPill button{margin-left:0;border:0;border-radius:999px;background:rgba(201,135,98,.13);color:#d89a77;font-weight:900;padding:7px 10px}.sessionPill button:active{transform:scale(.98)}@media(min-width:760px){.sessionPill{left:auto;right:24px;bottom:24px;transform:none}}
 </style>
 <div id="authGate">
  <div class="authWrap">
@@ -635,7 +635,7 @@ let tm;function toast(m){let t=document.getElementById('toast');t.textContent=m;
     <div class="authField"><label>Ciudad</label><input id="authCity" placeholder="Córdoba"></div>
    </div>
    <div class="authField"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="nombre@email.com"></div>
-   <div class="authField"><label>Contraseña</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div>
+   <div class="authField"><label>Contraseña</label><div class="passwordWrap"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"><button id="passwordToggle" class="passwordToggle" type="button" onclick="togglePasswordVisibility()" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button></div></div>
    <div id="authMsg" class="authMsg"></div>
    <button id="authSubmit" class="authSubmit" onclick="submitAuth()">Ingresar</button>
    <div class="authHint">Las cuentas se autentican con Supabase. CUBRÍ no guarda tu contraseña en este archivo.</div>
@@ -645,6 +645,14 @@ let tm;function toast(m){let t=document.getElementById('toast');t.textContent=m;
 <div id="sessionPill" class="sessionPill"><span id="sessionLabel"></span><button onclick="cubriSignOut()">Salir</button></div>
 <script>
 let authMode='login';
+function togglePasswordVisibility(){
+ const input=document.getElementById('authPassword'), btn=document.getElementById('passwordToggle');
+ const showing=input.type==='text';
+ input.type=showing?'password':'text';
+ btn.textContent=showing?'Ver':'Ocultar';
+ btn.setAttribute('aria-label',showing?'Mostrar contraseña':'Ocultar contraseña');
+ btn.setAttribute('aria-pressed',String(!showing));
+}
 function setAuthMode(mode){authMode=mode;document.getElementById('signupFields').style.display=mode==='signup'?'block':'none';document.getElementById('tabLogin').classList.toggle('active',mode==='login');document.getElementById('tabSignup').classList.toggle('active',mode==='signup');document.getElementById('authSubmit').textContent=mode==='login'?'Ingresar':'Crear cuenta';document.getElementById('authMsg').textContent='';}
 function authMessage(m){document.getElementById('authMsg').textContent=m||'';}
 async function submitAuth(){
@@ -664,7 +672,7 @@ async function submitAuth(){
 }
 async function onCubriSession(session){
  const gate=document.getElementById('authGate'), pill=document.getElementById('sessionPill');
- if(session?.user){gate.classList.remove('show');pill.style.display='block';document.getElementById('sessionLabel').textContent=session.user.email||'Sesión activa';await syncProfile(session.user)}
+ if(session?.user){gate.classList.remove('show');pill.style.display='flex';document.getElementById('sessionLabel').textContent=session.user.email||'Sesión activa';await syncProfile(session.user)}
  else {gate.classList.add('show');pill.style.display='none'}
 }
 </script>
