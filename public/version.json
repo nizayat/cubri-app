@@ -1,8 +1,0 @@
-{
-  "app": "Capital AI",
-  "version": "37.0.0-rc.5.2",
-  "label": "V37.0 RC5.2",
-  "build": "2026-08-17",
-  "decision_engine": "V37.0 RC5.2 Decision OS",
-  "status": "release-candidate"
-}
