@@ -139,15 +139,11 @@ body.dark .scoreRing:after{background:#162229}
 <div class="mode"><button id="companyBtn" class="on" onclick="switchRole('company')">Empresa</button><button id="workerBtn" onclick="switchRole('worker')">Trabajador</button></div>
 
 <section id="company-home" class="screen active">
- <div class="hero"><div class="kicker">Hotel Plaza · Córdoba</div><h1>Tu operación,<br>siempre cubierta.</h1><p class="lead">Encontrá personal eventual confiable y seguí cada turno desde un único lugar.</p></div>
- <div class="stats"><div class="stat"><b>4</b><span>en servicio</span></div><div class="stat"><b>1</b><span>por cubrir</span></div><div class="stat"><b>3</b><span>confirmados</span></div></div>
+ <div class="hero"><div id="companyHeroKicker" class="kicker">Tu empresa</div><h1>Tu operación,<br>siempre cubierta.</h1><p class="lead">Publicá turnos reales, recibí postulaciones y seguí la operación desde un único lugar.</p></div>
+ <div class="stats"><div class="stat"><b id="statActive">0</b><span>en servicio</span></div><div class="stat"><b id="statOpen">0</b><span>por cubrir</span></div><div class="stat"><b id="statConfirmed">0</b><span>confirmados</span></div></div>
  <button class="btn primary" onclick="go('create-shift-v7')">Publicar turno</button>
  <div class="grid2"><button class="btn secondary" onclick="go('staff')">Mi staff</button><button class="btn copper" onclick="go('urgent')">Cobertura urgente</button></div>
- <div class="card">
-   <div class="row"><b>Operación de hoy</b><span class="ok"><i class="dot"></i> TODO OK</span></div>
-   <div class="item"><div class="row"><span>Cena · Restaurante</span><b>3/3</b></div><div class="muted">20:00 · equipo confirmado</div></div>
-   <div class="item"><div class="row"><span>Evento privado</span><b>5/6</b></div><div class="muted">21:30 · una posición abierta</div></div>
- </div>
+ <div class="card"><div class="row"><b>Turnos recientes</b><button class="miniAction" type="button" onclick="refreshRealData()">Actualizar</button></div><div id="companyRecentShifts" class="realList"><div class="muted">Cargando turnos…</div></div></div>
  <div class="card dark"><div class="label" style="color:#b9c6ca">Tiempo medio de cobertura</div><div class="row metric"><strong>14</strong><span class="muted">min · últimos 30 días</span></div><div class="progress"><i></i></div></div>
 </section>
 
@@ -201,10 +197,10 @@ body.dark .scoreRing:after{background:#162229}
 </section>
 
 <section id="worker-home" class="screen">
- <div class="hero"><div class="kicker">Martín López</div><h1>Turnos que encajan con vos.</h1><p class="lead">Oportunidades compatibles con tu experiencia y disponibilidad.</p></div>
- <div class="card"><div class="row"><div><div class="label">Disponibilidad</div><b>Hoy desde las 18:00</b></div><span class="ok"><i class="dot"></i> ACTIVA</span></div></div>
- <div class="card"><div class="row"><div><b>Hotel Plaza</b><div class="muted">Mozo · Hoy</div></div><div class="value">$65.000</div></div><div class="item"><b>19:00 → 02:00</b><div class="muted">2,3 km · empresa 4,8 · 96% compatibilidad</div></div><div class="grid2"><button class="btn secondary">Descartar</button><button class="btn primary" onclick="go('worker-shifts')">Me interesa</button></div></div>
-<button class="btn secondary" onclick="go('worker-checkin')">Abrir turno de hoy</button></section>
+ <div class="hero"><div id="workerHeroKicker" class="kicker">Trabajador</div><h1>Turnos disponibles.</h1><p class="lead">Oportunidades reales publicadas por empresas en CUBRÍ.</p></div>
+ <div class="card"><div class="row"><b>Oportunidades</b><button class="miniAction" type="button" onclick="loadWorkerFeed()">Actualizar</button></div><div id="workerRealFeed" class="realList"><div class="muted">Cargando turnos…</div></div></div>
+ <button class="btn secondary" onclick="openMyActiveShift()">Abrir mi turno confirmado</button>
+</section>
 
 <section id="worker-profile" class="screen">
  <div class="hero"><div class="kicker">Perfil profesional</div><h1>Martín López.</h1><p class="lead">Mozo · Bartender</p></div>
@@ -344,9 +340,11 @@ body.dark .scoreRing:after{background:#162229}
  <div class="form">
    <div class="field"><label>Puesto</label><select id="shiftRole"><option>Mozo</option><option>Bartender</option><option>Cocinero</option><option>Bachero</option><option>Housekeeping</option><option>Recepción</option></select></div>
    <div class="field"><label>Cantidad</label><div class="counter"><button onclick="changeQty(-1)">−</button><b id="shiftQty">3</b><button onclick="changeQty(1)">+</button></div></div>
-   <div class="grid2"><div class="field"><label>Inicio</label><input id="shiftStart" type="time" value="19:00"></div><div class="field"><label>Fin</label><input id="shiftEnd" type="time" value="02:00"></div></div>
-   <div class="field"><label>Pago por persona</label><input id="shiftPay" type="number" value="65000"></div>
-   <div class="field"><label>Ubicación</label><input id="shiftLocation" value="Hotel Plaza · Córdoba"></div>
+   <div class="field"><label>Fecha</label><input id="shiftDate" type="date"></div>
+   <div class="grid2"><div class="field"><label>Inicio</label><select id="shiftStart" class="timeSelect"></select></div><div class="field"><label>Fin</label><select id="shiftEnd" class="timeSelect"></select></div></div>
+   <div id="overnightHint" class="timeHint">Si el fin es anterior al inicio, CUBRÍ lo toma como el día siguiente.</div>
+   <div class="field"><label>Pago por persona</label><input id="shiftPay" type="number" min="0" step="500" value="65000"></div>
+   <div class="field"><div class="locationLabel"><label>Ubicación</label><div class="locationActions"><button class="miniAction" type="button" onclick="useCurrentLocation()">📍 GPS</button><button class="miniAction" type="button" onclick="openDraftMap()">Mapa ↗</button></div></div><input id="shiftLocation" value="Hotel Plaza · Córdoba"><div id="gpsDraftStatus" class="timeHint">Podés escribir una dirección o usar GPS.</div></div>
    <div class="field"><label>Requisitos</label><div class="checkline"><input id="reqFood" type="checkbox" checked><span>Manipulador de alimentos</span></div><div class="checkline"><input id="reqExp" type="checkbox" checked><span>Experiencia mínima</span></div></div>
    <div class="field"><label>Prioridad</label><select id="shiftPriority"><option>Normal</option><option>Urgente</option></select></div>
    <button class="btn primary" onclick="publishShift()">Publicar y buscar candidatos</button>
@@ -354,8 +352,8 @@ body.dark .scoreRing:after{background:#162229}
 </section>
 
 <section id="candidate-pool-v7" class="screen">
- <div class="hero"><div class="kicker">Pool elegible</div><h1 id="poolTitle">Candidatos compatibles.</h1><p class="lead">El ranking cambia según requisitos, reputación y disponibilidad.</p></div>
- <div id="candidateList"></div>
+ <div class="hero"><div class="kicker">Postulaciones reales</div><h1 id="poolTitle">Esperando candidatos.</h1><p class="lead">Acá aparecen trabajadores que tocaron “Me interesa” en este turno.</p></div>
+ <button class="btn secondary" onclick="loadApplicationsForCurrentShift()">Actualizar postulaciones</button><div id="candidateList"></div>
 </section>
 
 <section id="contract-v7" class="screen">
@@ -370,7 +368,7 @@ body.dark .scoreRing:after{background:#162229}
    <div class="timeline"><i id="tl1"></i><i id="tl2"></i><i id="tl3"></i><i id="tl4"></i></div>
    <div id="operationWorkers"></div>
  </div>
- <button class="btn copper" onclick="simulateCancellation()">Simular baja de último momento</button>
+ <div class="grid2"><button class="btn secondary" onclick="setCompanyShiftActive()">Iniciar operación</button><button class="btn primary" onclick="completeCompanyShift()">Finalizar turno</button></div>
 </section>
 
 <section id="replacement-v7" class="screen">
@@ -383,7 +381,8 @@ body.dark .scoreRing:after{background:#162229}
  <div class="card">
    <div class="row"><div><div class="label">Estado</div><b id="workerShiftState">Confirmado</b></div><span id="gpsState" class="status">GPS pendiente</span></div>
    <div class="item"><div class="label">Pago acordado</div><div id="workerPay" class="money">$65.000</div></div>
-   <button class="btn primary" onclick="workerArrive()">Llegué al establecimiento</button>
+   <button class="btn secondary" onclick="openActiveShiftMap()">📍 Ver mapa / cómo llegar</button>
+   <button class="btn primary" onclick="workerArrive()">Validar llegada con GPS</button>
    <button class="btn success" onclick="workerCheckIn()">Hacer check-in ✓</button>
    <button class="btn secondary" onclick="workerCheckOut()">Finalizar / check-out</button>
  </div>
@@ -637,6 +636,10 @@ let tm;function toast(m){let t=document.getElementById('toast');t.textContent=m;
 </script>
 
 
+
+<style>
+.locationLabel{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}.locationLabel label{margin:0!important}.locationActions{display:flex;gap:6px}.miniAction{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:10px;padding:7px 9px;font-weight:800;font-size:12px}.timeHint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}.timeSelect{appearance:auto}.realList{display:grid;gap:10px;margin-top:12px}.realItem{padding:14px 0;border-top:1px solid var(--line)}.realItem:first-child{border-top:0}.realActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.realActions .btn{width:auto;margin:0;padding:10px 14px;font-size:13px}.pillStatus{display:inline-flex;border:1px solid var(--line);padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900}.mapLink{font-size:12px;font-weight:800;text-decoration:none;color:var(--copper)}
+</style>
 <style>
 #authGate{position:fixed;inset:0;z-index:9999;background:var(--bg,#08161b);display:none;overflow:auto;padding:28px 18px 50px}
 #authGate.show{display:block}.authWrap{max-width:560px;margin:30px auto}.authLogo{font-size:34px;font-weight:900;letter-spacing:-1px;margin-bottom:24px}.authLogo span{color:#c98762}.authCard{background:var(--card,#12232a);border:1px solid rgba(255,255,255,.12);border-radius:26px;padding:22px}.authTabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.authTabs button{border:0;border-radius:15px;padding:13px;font-weight:800}.authTabs .active{background:#eef2ee;color:#102027}.authTabs button:not(.active){background:transparent;color:#9caaae;border:1px solid rgba(255,255,255,.12)}.authField{margin:12px 0}.authField label{display:block;color:#9caaae;font-size:13px;font-weight:700;margin-bottom:6px}.authField input,.authField select{width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:#0d1c22;color:#fff;font-size:16px}.passwordWrap{position:relative}.passwordWrap input{padding-right:76px}.passwordToggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;border-radius:10px;background:rgba(238,242,238,.10);color:#dbe4e4;font-weight:800;font-size:12px;padding:8px 10px;cursor:pointer}.passwordToggle:focus-visible{outline:2px solid #eef2ee;outline-offset:2px}.authMsg{min-height:24px;color:#c98762;margin:10px 0;font-size:14px}.authSubmit{width:100%;padding:15px;border:0;border-radius:15px;background:#eef2ee;color:#102027;font-size:16px;font-weight:900}.authHint{color:#9caaae;font-size:13px;line-height:1.45;margin-top:14px}
@@ -772,6 +775,86 @@ async function createRealShift(payload){
   if(error){toast(error.message);return null;} return data;
 }
 window.addEventListener('load',initBackend);
+</script>
+<script>
+/* ===== CUBRÍ V10.3 · flujo real de turnos ===== */
+let realCurrentShiftId=null, realActiveShift=null, draftCoords={lat:null,lng:null}, currentAccountType=null;
+function localDateISO(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function initTimeSelects(){
+ const opts=[];for(let h=0;h<24;h++)for(let m of [0,30]){const v=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');opts.push(`<option value="${v}">${v}</option>`)}
+ ['shiftStart','shiftEnd'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.options.length)el.innerHTML=opts.join('')});
+ if(document.getElementById('shiftStart'))shiftStart.value='19:00';if(document.getElementById('shiftEnd'))shiftEnd.value='02:00';if(document.getElementById('shiftDate'))shiftDate.value=localDateISO();
+}
+function parseLocalDateTime(date,time){const [y,m,d]=date.split('-').map(Number),[hh,mm]=time.split(':').map(Number);return new Date(y,m-1,d,hh,mm,0,0)}
+function formatShiftRange(s){const a=new Date(s.starts_at),b=new Date(s.ends_at);return `${a.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})} · ${a.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})} → ${b.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`}
+function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+async function getMe(){if(!db)return null;const {data:{user}}=await db.auth.getUser();return user}
+async function getMyProfile(){const user=await getMe();if(!user)return null;const {data}=await db.from('profiles').select('*').eq('id',user.id).maybeSingle();return data}
+async function useCurrentLocation(){
+ if(!navigator.geolocation)return toast('Tu navegador no ofrece GPS.');
+ gpsDraftStatus.textContent='Obteniendo ubicación…';
+ navigator.geolocation.getCurrentPosition(pos=>{draftCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};gpsDraftStatus.textContent=`GPS listo · ${draftCoords.lat.toFixed(5)}, ${draftCoords.lng.toFixed(5)}`;toast('Ubicación GPS guardada ✓')},err=>{gpsDraftStatus.textContent='No se pudo obtener GPS. Revisá el permiso de ubicación.';toast('No pudimos acceder al GPS.')},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+}
+function openDraftMap(){const q=draftCoords.lat!=null?`${draftCoords.lat},${draftCoords.lng}`:document.getElementById('shiftLocation')?.value.trim();if(!q)return toast('Ingresá una ubicación primero.');window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`,'_blank','noopener')}
+function openMapForShift(s){const q=s?.location_lat!=null?`${s.location_lat},${s.location_lng}`:s?.location_name;if(!q)return toast('Este turno no tiene ubicación.');window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`,'_blank','noopener')}
+function openActiveShiftMap(){openMapForShift(realActiveShift)}
+async function publishShift(){
+ const me=await getMe();if(!me)return toast('Iniciá sesión.');if(currentAccountType!=='company')return toast('Solo una cuenta empresa puede publicar turnos.');
+ const date=shiftDate.value||localDateISO(),start=shiftStart.value,end=shiftEnd.value,loc=shiftLocation.value.trim(),pay=Number(shiftPay.value),slots=Number(shiftQty.textContent);
+ if(!loc||!pay||pay<0)return toast('Completá ubicación y pago.');
+ let a=parseLocalDateTime(date,start),b=parseLocalDateTime(date,end);if(b<=a)b.setDate(b.getDate()+1);
+ const payload={role:shiftRole.value,slots,starts_at:a.toISOString(),ends_at:b.toISOString(),pay_amount:pay,location_name:loc,location_lat:draftCoords.lat,location_lng:draftCoords.lng,requires_food_handler:reqFood.checked,requires_experience:reqExp.checked,priority:shiftPriority.value.toLowerCase(),status:'open'};
+ const created=await createRealShift(payload);if(!created)return;
+ realCurrentShiftId=created.id;realActiveShift=created;appState.shift={role:created.role,qty:created.slots,start:start,end:end,pay:Number(created.pay_amount),location:created.location_name,food:created.requires_food_handler,exp:created.requires_experience,priority:created.priority,published:true};persist();
+ toast('Turno publicado en Supabase ✓');await loadApplicationsForCurrentShift();await loadCompanyDashboard();go('candidate-pool-v7');
+}
+async function loadCompanyDashboard(){
+ if(!db||currentAccountType!=='company')return;const me=await getMe();if(!me)return;
+ const {data:profile}=await db.from('profiles').select('full_name,city').eq('id',me.id).maybeSingle();
+ if(companyHeroKicker)companyHeroKicker.textContent=[profile?.full_name,profile?.city].filter(Boolean).join(' · ')||'Mi empresa';
+ const {data:rows,error}=await db.from('shifts').select('*').eq('company_user_id',me.id).order('starts_at',{ascending:false}).limit(20);if(error)return;
+ const list=rows||[];statActive.textContent=list.filter(x=>x.status==='active').length;statOpen.textContent=list.filter(x=>x.status==='open').length;statConfirmed.textContent=list.filter(x=>x.status==='confirmed').length;
+ companyRecentShifts.innerHTML=list.length?list.slice(0,5).map(s=>`<div class="realItem"><div class="row"><div><b>${escapeHtml(s.role)} · ${s.slots} persona${s.slots===1?'':'s'}</b><div class="muted">${escapeHtml(formatShiftRange(s))}</div></div><span class="pillStatus">${escapeHtml(s.status.toUpperCase())}</span></div><div class="muted">${escapeHtml(s.location_name)} · ${money(s.pay_amount)} p/persona</div><div class="realActions"><button class="btn secondary" onclick="openCompanyShift('${s.id}')">Ver postulaciones</button>${s.location_name?`<button class="btn secondary" onclick='openMapForShift(${JSON.stringify(s)})'>Mapa</button>`:''}</div></div>`).join(''):'<div class="muted">Todavía no publicaste turnos reales.</div>';
+}
+async function openCompanyShift(id){realCurrentShiftId=id;const {data}=await db.from('shifts').select('*').eq('id',id).single();realActiveShift=data;await loadApplicationsForCurrentShift();go('candidate-pool-v7')}
+async function loadApplicationsForCurrentShift(){
+ if(!realCurrentShiftId){candidateList.innerHTML='<div class="card"><div class="muted">Publicá o abrí un turno para ver postulaciones.</div></div>';return}
+ const {data:shift}=await db.from('shifts').select('*').eq('id',realCurrentShiftId).single();realActiveShift=shift;
+ const {data:apps,error}=await db.from('shift_applications').select('id,worker_user_id,status,applied_at').eq('shift_id',realCurrentShiftId).order('applied_at',{ascending:true});if(error)return toast(error.message);
+ const a=apps||[];poolTitle.textContent=`${a.length} postulación${a.length===1?'':'es'}.`;
+ if(!a.length){candidateList.innerHTML='<div class="card"><b>Turno publicado ✓</b><div class="muted" style="margin-top:6px">Todavía no hay postulaciones. Un trabajador real debe ingresar y tocar “Me interesa”.</div></div>';return}
+ const ids=[...new Set(a.map(x=>x.worker_user_id))];const {data:profiles}=await db.from('profiles').select('id,full_name,city').in('id',ids);const pm=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
+ candidateList.innerHTML=a.map(x=>{const p=pm[x.worker_user_id]||{};return `<div class="card"><div class="row"><div><div class="value">${escapeHtml(p.full_name||'Trabajador')}</div><div class="muted">${escapeHtml(p.city||'')}</div></div><span class="pillStatus">${escapeHtml(x.status.toUpperCase())}</span></div><div class="realActions">${x.status==='applied'?`<button class="btn primary" onclick="selectRealApplicant('${x.id}')">Seleccionar</button><button class="btn secondary" onclick="declineRealApplicant('${x.id}')">Descartar</button>`:''}${['selected','confirmed'].includes(x.status)?'<span class="ok">SELECCIONADO ✓</span>':''}</div></div>`}).join('');
+}
+async function selectRealApplicant(id){const {error}=await db.from('shift_applications').update({status:'selected'}).eq('id',id);if(error)return toast(error.message);toast('Trabajador seleccionado ✓');await loadApplicationsForCurrentShift();await updateShiftCoverageStatus()}
+async function declineRealApplicant(id){const {error}=await db.from('shift_applications').update({status:'declined'}).eq('id',id);if(error)return toast(error.message);await loadApplicationsForCurrentShift()}
+async function updateShiftCoverageStatus(){if(!realCurrentShiftId)return;const {data:s}=await db.from('shifts').select('slots').eq('id',realCurrentShiftId).single();const {count}=await db.from('shift_applications').select('*',{count:'exact',head:true}).eq('shift_id',realCurrentShiftId).in('status',['selected','confirmed']);if(count>=s.slots)await db.from('shifts').update({status:'confirmed'}).eq('id',realCurrentShiftId);await loadCompanyDashboard()}
+async function loadWorkerFeed(){
+ if(!db||currentAccountType!=='worker')return;const me=await getMe();if(!me)return;const p=await getMyProfile();if(workerHeroKicker)workerHeroKicker.textContent=p?.full_name||'Trabajador';
+ const {data:shifts,error}=await db.from('shifts').select('*').eq('status','open').gte('ends_at',new Date().toISOString()).order('starts_at',{ascending:true}).limit(30);if(error)return;
+ const {data:apps}=await db.from('shift_applications').select('shift_id,status').eq('worker_user_id',me.id);const am=Object.fromEntries((apps||[]).map(x=>[x.shift_id,x.status]));
+ workerRealFeed.innerHTML=(shifts||[]).length?(shifts||[]).map(s=>{const st=am[s.id];return `<div class="realItem"><div class="row"><div><b>${escapeHtml(s.role)}</b><div class="muted">${escapeHtml(formatShiftRange(s))}</div></div><div class="value">${money(s.pay_amount)}</div></div><div class="muted">${escapeHtml(s.location_name)} · ${s.slots} vacante${s.slots===1?'':'s'}</div><div class="realActions"><button class="btn secondary" onclick='openMapForShift(${JSON.stringify(s)})'>Cómo llegar</button>${!st?`<button class="btn primary" onclick="applyToShift('${s.id}')">Me interesa</button>`:st==='selected'?`<button class="btn success" onclick="confirmWorkerSelection('${s.id}')">Confirmar turno ✓</button>`:`<span class="pillStatus">${escapeHtml(st.toUpperCase())}</span>`}</div></div>`}).join(''):'<div class="muted">No hay turnos abiertos por ahora.</div>';
+}
+async function applyToShift(shiftId){const me=await getMe();const {error}=await db.from('shift_applications').insert({shift_id:shiftId,worker_user_id:me.id,status:'applied'});if(error){if(error.code==='23505')toast('Ya te postulaste a este turno.');else toast(error.message);return}toast('Postulación enviada ✓');await loadWorkerFeed()}
+async function confirmWorkerSelection(shiftId){const me=await getMe();const {error}=await db.from('shift_applications').update({status:'confirmed'}).eq('shift_id',shiftId).eq('worker_user_id',me.id).eq('status','selected');if(error)return toast(error.message);toast('Turno confirmado ✓');const {data:s}=await db.from('shifts').select('*').eq('id',shiftId).single();realActiveShift=s;await loadWorkerFeed();go('worker-active-v7')}
+async function openMyActiveShift(){const me=await getMe();const {data:apps}=await db.from('shift_applications').select('shift_id,status').eq('worker_user_id',me.id).in('status',['selected','confirmed']).order('applied_at',{ascending:false}).limit(1);if(!apps?.length)return toast('No tenés un turno seleccionado o confirmado.');const {data:s}=await db.from('shifts').select('*').eq('id',apps[0].shift_id).single();realActiveShift=s;realCurrentShiftId=s.id;hydrateWorkerActive(s,apps[0].status);go('worker-active-v7')}
+function hydrateWorkerActive(s,status){if(!s)return;waTitle.textContent=s.location_name+'.';waSub.textContent=formatShiftRange(s)+' · '+s.role;workerPay.textContent=money(s.pay_amount);workerShiftState.textContent=status==='selected'?'Esperando tu confirmación':status==='confirmed'?'Confirmado':s.status;gpsState.className='status';gpsState.textContent='GPS pendiente'}
+async function workerArrive(){if(!realActiveShift)return toast('Abrí primero tu turno.');if(!navigator.geolocation)return toast('GPS no disponible.');navigator.geolocation.getCurrentPosition(pos=>{let ok=true;if(realActiveShift.location_lat!=null){const d=haversine(pos.coords.latitude,pos.coords.longitude,realActiveShift.location_lat,realActiveShift.location_lng);ok=d<=0.5;if(!ok)return toast(`Estás a ${d.toFixed(1)} km del turno.`)}gpsState.className='ok';gpsState.textContent='GPS OK';workerShiftState.textContent='En ubicación';toast('Ubicación validada ✓')},()=>toast('No se pudo validar tu ubicación.'),{enableHighAccuracy:true,timeout:10000})}
+function haversine(a,b,c,d){const R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,q=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(q))}
+async function workerCheckIn(){if(!realActiveShift)return toast('Abrí primero tu turno.');const me=await getMe();const now=new Date().toISOString();const {error}=await db.from('attendance').upsert({shift_id:realActiveShift.id,worker_user_id:me.id,check_in_at:now},{onConflict:'shift_id,worker_user_id'});if(error)return toast(error.message);await db.from('shifts').update({status:'active'}).eq('id',realActiveShift.id);workerShiftState.textContent='Check-in realizado';toast('Check-in registrado ✓')}
+async function workerCheckOut(){if(!realActiveShift)return toast('Abrí primero tu turno.');const me=await getMe();const {error}=await db.from('attendance').update({check_out_at:new Date().toISOString()}).eq('shift_id',realActiveShift.id).eq('worker_user_id',me.id);if(error)return toast(error.message);workerShiftState.textContent='Turno finalizado';toast('Check-out registrado ✓');go('rating-v7')}
+async function renderOperation(){
+ if(!db||currentAccountType!=='company')return;const me=await getMe();let s=realActiveShift;if(!s||s.company_user_id!==me.id){const {data}=await db.from('shifts').select('*').eq('company_user_id',me.id).in('status',['confirmed','active']).order('starts_at',{ascending:true}).limit(1);s=data?.[0]||null;realActiveShift=s}if(!s){opTitle.textContent='Sin operación activa.';opSubtitle.textContent='Confirmá un equipo para verlo acá.';operationWorkers.innerHTML='';opStatus.textContent='SIN TURNO';opStatus.className='status';return}
+ opTitle.textContent=s.role+' · '+s.slots+' persona'+(s.slots===1?'':'s');opSubtitle.textContent=s.location_name+' · '+formatShiftRange(s);
+ const {data:apps}=await db.from('shift_applications').select('worker_user_id,status').eq('shift_id',s.id).in('status',['selected','confirmed']);const ids=(apps||[]).map(a=>a.worker_user_id);let profiles=[];if(ids.length){const r=await db.from('profiles').select('id,full_name').in('id',ids);profiles=r.data||[]}const pm=Object.fromEntries(profiles.map(p=>[p.id,p]));const {data:att}=await db.from('attendance').select('*').eq('shift_id',s.id);const am=Object.fromEntries((att||[]).map(a=>[a.worker_user_id,a]));
+ operationWorkers.innerHTML=(apps||[]).length?(apps||[]).map(a=>`<div class="docrow"><div><b>${escapeHtml(pm[a.worker_user_id]?.full_name||'Trabajador')}</b><div class="muted">${am[a.worker_user_id]?.check_out_at?'Finalizado':am[a.worker_user_id]?.check_in_at?'Check-in confirmado':a.status==='confirmed'?'Confirmado':'Seleccionado'}</div></div><span class="${am[a.worker_user_id]?.check_in_at?'ok':'status'}">${am[a.worker_user_id]?.check_in_at?'✓ OK':'esperando'}</span></div>`).join(''):'<div class="muted">No hay trabajadores seleccionados todavía.</div>';opStatus.textContent=s.status.toUpperCase();opStatus.className=s.status==='active'?'ok':'status';
+}
+async function setCompanyShiftActive(){if(!realActiveShift)return toast('No hay turno seleccionado.');const {error}=await db.from('shifts').update({status:'active'}).eq('id',realActiveShift.id);if(error)return toast(error.message);realActiveShift.status='active';toast('Operación iniciada ✓');await renderOperation();await loadCompanyDashboard()}
+async function completeCompanyShift(){if(!realActiveShift)return toast('No hay turno seleccionado.');const {error}=await db.from('shifts').update({status:'completed'}).eq('id',realActiveShift.id);if(error)return toast(error.message);realActiveShift.status='completed';toast('Turno finalizado ✓');await renderOperation();await loadCompanyDashboard()}
+async function refreshRealData(){if(currentAccountType==='company'){await loadCompanyDashboard();await renderOperation()}else await loadWorkerFeed()}
+const _go=go;go=function(id){_go(id);if(id==='company-home')loadCompanyDashboard();if(id==='worker-home')loadWorkerFeed();if(id==='operation-v7')renderOperation();if(id==='candidate-pool-v7')loadApplicationsForCurrentShift();if(id==='worker-active-v7'&&realActiveShift)hydrateWorkerActive(realActiveShift,'confirmed')}
+const _onCubriSession=onCubriSession;onCubriSession=async function(session){await _onCubriSession(session);if(session?.user){const profile=await getMyProfile();currentAccountType=profile?.account_type||session.user.user_metadata?.account_type||'worker';switchRole(currentAccountType==='company'?'company':'worker');const other=currentAccountType==='company'?workerBtn:companyBtn;if(other){other.disabled=true;other.style.opacity='.35';other.title='El tipo de cuenta se define en tu perfil';}await refreshRealData()}}
+window.addEventListener('load',()=>{initTimeSelects()});
 </script>
 <script src="config.js"></script>
 </body>
